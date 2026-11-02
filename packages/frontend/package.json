@@ -1,0 +1,33 @@
+{
+  "name": "@notebooklm/frontend",
+  "version": "1.0.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "test": "tsc --noEmit",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@assistant-ui/react": "^0.15.32",
+    "@assistant-ui/react-markdown": "^0.14.24",
+    "@notebooklm/shared": "*",
+    "@reduxjs/toolkit": "^2.6.1",
+    "lucide-react": "^0.475.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-redux": "^9.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.5.4",
+    "vite": "^6.1.0"
+  }
+}

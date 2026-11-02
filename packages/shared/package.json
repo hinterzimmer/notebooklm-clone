@@ -1,0 +1,20 @@
+{
+  "name": "@notebooklm/shared",
+  "version": "1.0.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test dist/**/*.spec.js || tsc && node --test dist/**/*.spec.js"
+  },
+  "dependencies": {
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/uuid": "^10.0.0",
+    "typescript": "^5.5.4"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "notebooklm-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "start:backend": "npm run start:dev --workspace=@notebooklm/backend",
+    "start:frontend": "npm run dev --workspace=@notebooklm/frontend"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.4"
+  }
+}

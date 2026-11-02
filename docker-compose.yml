@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg18
+    container_name: notebooklm-postgres
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_DB: notebooklm
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_master
+    volumes:
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d notebooklm']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  floci:
+    image: floci/floci:latest
+    container_name: notebooklm-floci
+    restart: unless-stopped
+    ports:
+      - '4566:4566'
+    environment:
+      SERVICES: s3
+      DEFAULT_REGION: ${AWS_REGION:-us-east-1}
+    volumes:
+      - flocidata:/var/lib/floci
+
+  backend:
+    build:
+      context: .
+      dockerfile: packages/backend/Dockerfile
+    container_name: notebooklm-backend
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      floci:
+        condition: service_started
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      APP_MODE: ${APP_MODE:-ALL}
+      PORT: 3000
+
+      # AWS Credentials & Region (from Terraform)
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+      TERRAFORM_AWS_ACCESS_KEY_ID: ${TERRAFORM_AWS_ACCESS_KEY_ID:-}
+      TERRAFORM_AWS_SECRET_ACCESS_KEY: ${TERRAFORM_AWS_SECRET_ACCESS_KEY:-}
+
+      # Amazon Cognito (from Terraform)
+      COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID}
+      COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID}
+      COGNITO_REGION: ${COGNITO_REGION:-${AWS_REGION:-us-east-1}}
+
+      # Bedrock Models & Dimensions
+      BEDROCK_MODEL_CHAT: ${BEDROCK_MODEL_CHAT:-us.anthropic.claude-sonnet-4-5-20250929-v1:0}
+      BEDROCK_MODEL_FAST: ${BEDROCK_MODEL_FAST:-us.anthropic.claude-haiku-4-5-20251001-v1:0}
+      BEDROCK_MODEL_EMBEDDING: ${BEDROCK_MODEL_EMBEDDING:-amazon.titan-embed-text-v2:0}
+      BEDROCK_MODEL_MULTIMODAL: ${BEDROCK_MODEL_MULTIMODAL:-amazon.titan-embed-image-v1}
+      EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-1024}
+      MAX_CHUNK_TOKENS: ${MAX_CHUNK_TOKENS:-1024}
+
+      # Bedrock Guardrails (Optional)
+      BEDROCK_GUARDRAIL_ID: ${BEDROCK_GUARDRAIL_ID:-}
+      BEDROCK_GUARDRAIL_VERSION: ${BEDROCK_GUARDRAIL_VERSION:-DRAFT}
+
+      # Local Infrastructure (Floci & Postgres)
+      FLOCI_ENDPOINT: http://floci:4566
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-notebooklm-documents}
+
+      # Database (PostgreSQL 18+ with pgvector)
+      DB_WRITE_HOST: postgres
+      DB_WRITE_PORT: 5432
+      DB_READ_HOSTS: postgres
+      DB_NAME: notebooklm
+      DB_USER: app_user
+      DB_PASSWORD: app_user_secret
+
+  frontend:
+    build:
+      context: .
+      dockerfile: packages/frontend/Dockerfile
+    container_name: notebooklm-frontend
+    restart: unless-stopped
+    ports:
+      - '5173:5173'
+    depends_on:
+      - backend
+    env_file:
+      - .env
+    environment:
+      VITE_COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID}
+      VITE_COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID}
+      VITE_COGNITO_REGION: ${COGNITO_REGION:-${AWS_REGION:-us-east-1}}
+
+volumes:
+  pgdata:
+  flocidata:
